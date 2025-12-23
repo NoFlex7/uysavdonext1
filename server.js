@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import adminRoutes from "./rules/Admin.js";
+import adminRoutes from "./rules/admin.js";
 
 dotenv.config();
 const app = express();
