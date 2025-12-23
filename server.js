@@ -13,7 +13,7 @@ mongoose
   .then(() => console.log("MongoDB ulandi"))
   .catch(err => console.log(err));
 
-app.use("/api/admin", adminRoutes);
+app.use("/api", adminRoutes);
 
 app.listen(5000, () => {
   console.log("Server 5000-portda ishlayapti");
