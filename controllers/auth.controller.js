@@ -1,35 +1,43 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
-export const login = async (req, res) => {
+export const register = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, password, role } = req.body;
 
+    // 1. Tekshiruv
     if (!phone || !password) {
       return res.status(400).json({
-        message: "ma’lumot to‘liq emas",
+        message: "Ma’lumot to‘liq emas",
       });
     }
 
-    const user = await User.findOne({ phone });
-    if (!user) {
-      return res.status(401).json({
-        message: "Telefon yoki parol noto‘g‘ri",
+    // 2. User bor-yo‘qligini tekshirish
+    const existUser = await User.findOne({ phone });
+    if (existUser) {
+      return res.status(409).json({
+        message: "Bu telefon raqam bilan user mavjud",
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "Telefon yoki parol noto‘g‘ri",
-      });
-    }
+    // 3. Parolni hash qilish
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    res.json({
+    // 4. User yaratish
+    const newUser = await User.create({
+      phone,
+      password: hashedPassword,
+      role: role || "user",
+    });
+
+    // 5. Javob qaytarish
+    res.status(201).json({
+      message: "User muvaffaqiyatli yaratildi",
       user: {
-        _id: user._id,
-        phone: user.phone,
-        role: user.role,
+        _id: newUser._id,
+        phone: newUser.phone,
+        role: newUser.role,
       },
     });
   } catch (err) {
