@@ -1,37 +1,59 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
-export const register = async (req, res) => {
+// LOGIN
+export const login = async (req, res) => {
   try {
-    const { phone, password, role } = req.body;
+    const { phone, password } = req.body;
 
-    // 1. Tekshiruv
     if (!phone || !password) {
-      return res.status(400).json({
-        message: "Ma’lumot to‘liq emas",
-      });
+      return res.status(400).json({ message: "Ma’lumot to‘liq emas" });
     }
 
-    // 2. User bor-yo‘qligini tekshirish
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(401).json({ message: "Telefon yoki parol noto‘g‘ri" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Telefon yoki parol noto‘g‘ri" });
+    }
+
+    res.json({
+      user: {
+        _id: user._id,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server xatosi" });
+  }
+};
+
+// REGISTER
+export const registerUser = async (req, res) => {
+  try {
+    const { phone, password } = req.body;
+
+    if (!phone || !password) {
+      return res.status(400).json({ message: "Ma’lumot to‘liq emas" });
+    }
+
     const existUser = await User.findOne({ phone });
     if (existUser) {
-      return res.status(409).json({
-        message: "Bu telefon raqam bilan user mavjud",
-      });
+      return res.status(409).json({ message: "Bu telefon bilan user mavjud" });
     }
 
-    // 3. Parolni hash qilish
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. User yaratish
     const newUser = await User.create({
       phone,
       password: hashedPassword,
-      role: role || "user",
+      role: "user",
     });
 
-    // 5. Javob qaytarish
     res.status(201).json({
       message: "User muvaffaqiyatli yaratildi",
       user: {
